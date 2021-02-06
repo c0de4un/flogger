@@ -220,6 +220,6 @@ final class FLogger
     // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 };
-class_alias( FLogger::class, 'SRCWLog' );
+class_alias( FLogger::class, 'MyLogger' );
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
