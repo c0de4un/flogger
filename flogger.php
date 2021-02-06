@@ -3,14 +3,6 @@
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-// NAMESPACE
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-// USE
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 // CLASS
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -18,16 +10,12 @@
  * @brief
  * File-based logger utility
  * 
- * @version 0.1.2
+ * @version 0.1.4
  */
 final class FLogger
 {
 
     // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //                       META & TRAITS
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                        CONSTANTS
@@ -41,7 +29,7 @@ final class FLogger
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
     /** @var FLogger */
-    private static $instance;
+    private static $instance = null;
 
     /** @var Array[String] cached file names. */
     private $file_names = [];
@@ -55,7 +43,7 @@ final class FLogger
 
     private function __constructor()
     {
-        $root_dir = getcwd();
+        $this->root_dir = getcwd();
 
         register_shutdown_function( [$this, 'handleShutdown'] );
     }
@@ -70,13 +58,27 @@ final class FLogger
      * @param Boolean $alloc = true
      * @return FLogger||NULL
     */
-    static function getInstance( bool $alloc = true )
+    public static function getInstance( bool $alloc = true )
     {
-        if ( $alloc && is_null(self::$instance) ) {
+        if ( $alloc && empty(self::$instance) ) {
             self::$instance = new FLogger();
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Set new Root-dir
+     * 
+     * @param String $dir
+    */
+    public function setRootDir( string $dir )
+    {
+        if ( $dir[strlen($dir) - 1] !== '/' ) {
+            $dir .= '/';
+        }
+        
+        $this->root_dir = $dir;
     }
 
     /**
@@ -141,17 +143,17 @@ final class FLogger
     public function handleShutdown(): void
     {
         $instance = self::getInstance( false );
-        $isntance->close();
+        $instance->close();
     }
 
     public static function info( $msg, $context = 'core', $dir = 'log' )
     {
-        self::print( 'GOOD: '.$msg, $context, $dir );
+        self::print( "GOOD: {$msg}", $context, $dir );
     }
 
     public static function verbose( $msg, $context = 'core', $dir = 'log' )
     {
-        self::print( 'VERBOSE: '.$msg, $context, $dir );
+        self::print( "VERBOSE: .{$msg}", $context, $dir );
     }
 
     public static function warning( $msg, $context = 'core', $dir = 'log' )
@@ -174,15 +176,11 @@ final class FLogger
     */
     private static function print( $msg, $context = 'core', $dir = 'log' ): void
     {
-        $instance = self::get_instance();
-        $file = $instance->get_file( $context, $dir );
+        $instance = self::getInstance();
+        $file = $instance->getFile( $context, $dir );
         $dt_mark = date( 'Y-m-d H:i:s' );
         fwrite( $file, $dt_mark.PHP_EOL.$msg.PHP_EOL );
     }
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //                     METHODS.PROTECTED
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                      METHODS.PRIVATE
@@ -199,7 +197,7 @@ final class FLogger
         if ( !file_exists($this->root_dir . $path) ) {
             try {
                 mkdir( $this->root_dir . $path, 0777, true );
-            } catch( \Exception $exception ) {
+            } catch( Exception $exception ) {
                 /* - void - */
             } finally { /* - void - */ }
         }
@@ -221,6 +219,7 @@ final class FLogger
 
     // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-}
+};
+class_alias( FLogger::class, 'SRCWLog' );
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
